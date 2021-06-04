@@ -1,7 +1,7 @@
 clear;
 clc;
 
-saveFig= 1;
+saveFig= 0;
 saveStats= 1;
 dirStruct.png= [pwd filesep 'final_figs' filesep];
 dirStruct.stats= [pwd filesep 'tables_for_stats' filesep];
@@ -216,7 +216,7 @@ for snrVar= 1:length(allSNRs)
     
     
     parfor unitVar= 1:length(uniqSpikeData)
-        % for unitVar= 10
+        %     for unitVar= 10
         cur_unit_data= uniqSpikeData(unitVar);
         cur_CF_Hz= cur_unit_data.CF_Hz;
         
@@ -248,11 +248,11 @@ for snrVar= 1:length(allSNRs)
             
             if ismember(use_FracSig0_FracHGram1_SynInd2_FracLPpow3, [2, 3])
                 for harmVar= 1:anl.nHarmonics
-                    [~, temp_SN_Image(harmVar, :)]= get_trajectory_signal(temp_SN_uRate_diff/anl.binRes, anl.fs, harmVar*danish.trajectory.f0, d_lp_f0);
+                    [~, temp_SN_Image(harmVar, :)]= helper.get_trajectory_signal(temp_SN_uRate_diff/anl.binRes, anl.fs, harmVar*danish.trajectory.f0, d_lp_f0);
                 end
                 
                 if use_FracSig0_FracHGram1_SynInd2_FracLPpow3==2
-                    F1_strength(unitVar)= sqrt(nanmean(nanmean( (temp_SN_Image .* (f1_harm_mask==1)) .^2, 1))) / SN_VoicedDrivenRate(unitVar);
+                    F1_strength(unitVar)= sqrt(nanmean(nanmean( (temp_SN_Image .* (f1_harm_mask==1)) .^2, 1))) / SN_VoicedDrivenRate(unitVar); %#ok<*NANMEAN>
                     F2_strength(unitVar)= sqrt(nanmean(nanmean( (temp_SN_Image .* (f2_harm_mask==1)) .^2, 1))) / SN_VoicedDrivenRate(unitVar);
                     F3_strength(unitVar)= sqrt(nanmean(nanmean( (temp_SN_Image .* (f3_harm_mask==1)) .^2, 1))) / SN_VoicedDrivenRate(unitVar);
                 elseif use_FracSig0_FracHGram1_SynInd2_FracLPpow3==3
@@ -263,7 +263,7 @@ for snrVar= 1:length(allSNRs)
                 end
             elseif ismember(use_FracSig0_FracHGram1_SynInd2_FracLPpow3, [0 1])
                 for harmVar= 1:anl.nHarmonics
-                    [temp_SN_Image(harmVar, :), ~]= get_trajectory_signal(temp_SN_uRate_diff/anl.binRes, anl.fs, harmVar*danish.trajectory.f0, d_lp_f0);
+                    [temp_SN_Image(harmVar, :), ~]= helper.get_trajectory_signal(temp_SN_uRate_diff/anl.binRes, anl.fs, harmVar*danish.trajectory.f0, d_lp_f0);
                 end
                 
                 if use_FracSig0_FracHGram1_SynInd2_FracLPpow3==1
@@ -286,13 +286,13 @@ for snrVar= 1:length(allSNRs)
         temp_N_uRate_neg= histcounts( cell2mat(SpikeTrain_N_neg)-cur_delay, anl.tEdge_hist) / length(SpikeTrain_N_neg);
         temp_N_uRate_sum= (temp_N_uRate_pos + temp_N_uRate_neg) / 2;
         temp_N_uRate_diff= (temp_N_uRate_pos - temp_N_uRate_neg)/2;
-
+        
         N_VoicedDrivenRate(unitVar)= sum(temp_N_uRate_sum .* danish.voiced_inds);
         
         temp_N_Image= nan(anl.nHarmonics, length(anl.tBinCenter));
         if ismember(use_FracSig0_FracHGram1_SynInd2_FracLPpow3, [2, 3])
             for harmVar= 1:anl.nHarmonics
-                [~, temp_N_Image(harmVar, :)]= get_trajectory_signal(temp_N_uRate_diff/anl.binRes, anl.fs, harmVar*danish.trajectory.f0, d_lp_f0);
+                [~, temp_N_Image(harmVar, :)]= helper.get_trajectory_signal(temp_N_uRate_diff/anl.binRes, anl.fs, harmVar*danish.trajectory.f0, d_lp_f0);
             end
             
             if use_FracSig0_FracHGram1_SynInd2_FracLPpow3==2
@@ -307,7 +307,7 @@ for snrVar= 1:length(allSNRs)
             end
         elseif ismember(use_FracSig0_FracHGram1_SynInd2_FracLPpow3, [0 1])
             for harmVar= 1:anl.nHarmonics
-                [temp_N_Image(harmVar, :), ~]= get_trajectory_signal(temp_N_uRate_diff/anl.binRes, anl.fs, harmVar*danish.trajectory.f0, d_lp_f0);
+                [temp_N_Image(harmVar, :), ~]= helper.get_trajectory_signal(temp_N_uRate_diff/anl.binRes, anl.fs, harmVar*danish.trajectory.f0, d_lp_f0);
             end
             
             if use_FracSig0_FracHGram1_SynInd2_FracLPpow3==1
@@ -332,7 +332,7 @@ for snrVar= 1:length(allSNRs)
     xUnit = num2cell([uniqSpikeData.unit]');
     xChinID = num2cell([uniqSpikeData.chinID]');
     UnitID= cellfun(@(x,y,z) sprintf('%d_%d_%d', x, y, z), xChinID, xTrack, xUnit, 'UniformOutput', false);
-
+    
     all_thresh_dB= [uniqSpikeData.thresh_dB];
     all_Q10_local= [uniqSpikeData.Q10local];
     all_TTR_dB= [uniqSpikeData.TTR_dB];
@@ -347,7 +347,7 @@ for snrVar= 1:length(allSNRs)
     hiInds= valid_inds & hiInds; % Some of the HI neurons are normal
     
     
-    %% Plot 
+    %% Plot
     % F1
     axTemp= subplot(length(allSNRs), 3, (snrVar-1)*3+1);
     
@@ -464,14 +464,14 @@ for snrVar= 1:length(allSNRs)
     [~, stat_params.invalid_range_vals(snrVar, 1)]= ttest2(F1_strength_rel(nhInds & cfs_out_F1), F1_strength_rel(hiInds & cfs_out_F1));
     [~, stat_params.invalid_range_vals(snrVar, 2)]= ttest2(F2_strength_rel(nhInds & cfs_out_F2), F2_strength_rel(hiInds & cfs_out_F2));
     [~, stat_params.invalid_range_vals(snrVar, 3)]= ttest2(F3_strength_rel(nhInds & cfs_out_F3), F3_strength_rel(hiInds & cfs_out_F3));
-
+    
     var_snr= repmat(snr2use, numel(allCFs_kHz), 1);
     cur_snr_tbl= table(all_chinIDs(:), UnitID(:), allCFs_kHz(:), all_SR(:), all_hearing(:), all_thresh_dB(:), all_Q10_local(:), all_TTR_dB(:), ...
-    var_snr(:), F1_strength_rel(:), F2_strength_rel(:), F3_strength_rel(:), ...
-    'VariableNames', {  'ChinID',      'UnitID',   'CF_kHz',    'SpontRate',  'HearingStatus',      'thresh_dB',        'Q10local',      'TTR_dB', ...
-      'SNR',        'F1pow',            'F2pow',            'F3pow'});
+        var_snr(:), F1_strength_rel(:), F2_strength_rel(:), F3_strength_rel(:), ...
+        'VariableNames', {  'ChinID',      'UnitID',   'CF_kHz',    'SpontRate',  'HearingStatus',      'thresh_dB',        'Q10local',      'TTR_dB', ...
+        'SNR',        'F1pow',            'F2pow',            'F3pow'});
     Fig5_Fpow_table= [Fig5_Fpow_table; cur_snr_tbl]; %#ok<AGROW>
-
+    
 end
 
 if saveStats
