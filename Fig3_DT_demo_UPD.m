@@ -33,8 +33,8 @@ uniqSpikeData= cur_snr_allChinSpikeData(uniqInds);
 [sig, fsOrg]= audioread(['mat_data' filesep 'FLN_Stim_S_P.wav']);
 
 fs= 20e3;
-sig= gen_resample(sig, fsOrg, fs);
-sig= gen_rescale(sig, 65);
+sig= helper.gen_resample(sig, fsOrg, fs);
+sig= helper.gen_rescale(sig, 65);
 tSig= (1:length(sig))/fs;
 
 anl.tStart= 235e-3;
@@ -79,7 +79,7 @@ tSig_window= tSig( (tSig > anl.tStart) & (tSig < anl.tEnd) );
 sig_plot= sig( (tSig > (anl.tStart-anl.tZoom)) & (tSig < (anl.tEnd+anl.tZoom)) );
 sig_window_nh= sig( (tSig > anl.tStart) & (tSig < anl.tEnd) );
 
-sig= gen_rescale(sig, 80);
+sig= helper.gen_rescale(sig, 80);
 sig_window_hi= sig( (tSig > anl.tStart) & (tSig < anl.tEnd) );
 
 
@@ -109,18 +109,18 @@ clf;
 sp_ax(1)= subplot(211);
 hold on;
 
-plot(tSig_plot, -plt.ShiftSig + plt.ScaleSig*sig_plot, 'Color', get_color('wg'));
-lineHan(3)= plot(tSig_window, -plt.ShiftSig + plt.ScaleSig*sig_window_nh, 'Color', get_color('k'));
+plot(tSig_plot, -plt.ShiftSig + plt.ScaleSig*sig_plot, 'Color', helper.get_color('wg'));
+lineHan(3)= plot(tSig_window, -plt.ShiftSig + plt.ScaleSig*sig_window_nh, 'Color', helper.get_color('k'));
 
-plot(anl.tBinCenters, plt.Shift_uR + nh.uR_pos_plot, 'Color', get_color('wg'));
-plot(anl.tBinCenters, plt.Shift_uR - nh.uR_neg_plot, 'Color', get_color('wg'));
-lineHan(1)= plot(anl.tBinCenters(anl.validWindowInds), plt.Shift_uR + nh.uR_pos_window, 'Color', get_color('b'));
-plot(anl.tBinCenters(anl.validWindowInds), plt.Shift_uR - nh.uR_neg_window, 'Color', get_color('lb'));
+plot(anl.tBinCenters, plt.Shift_uR + nh.uR_pos_plot, 'Color', helper.get_color('wg'));
+plot(anl.tBinCenters, plt.Shift_uR - nh.uR_neg_plot, 'Color', helper.get_color('wg'));
+lineHan(1)= plot(anl.tBinCenters(anl.validWindowInds), plt.Shift_uR + nh.uR_pos_window, 'Color', helper.get_color('b'));
+plot(anl.tBinCenters(anl.validWindowInds), plt.Shift_uR - nh.uR_neg_window, 'Color', helper.get_color('lb'));
 
-plot(anl.tBinCenters, hi.uR_pos_plot, 'Color', get_color('wg'));
-plot(anl.tBinCenters, -hi.uR_neg_plot, 'Color', get_color('wg'));
-lineHan(2)= plot(anl.tBinCenters(anl.validWindowInds), hi.uR_pos_window, 'Color', get_color('r'));
-plot(anl.tBinCenters(anl.validWindowInds), -hi.uR_neg_window, 'Color', get_color('lr'));
+plot(anl.tBinCenters, hi.uR_pos_plot, 'Color', helper.get_color('wg'));
+plot(anl.tBinCenters, -hi.uR_neg_plot, 'Color', helper.get_color('wg'));
+lineHan(2)= plot(anl.tBinCenters(anl.validWindowInds), hi.uR_pos_window, 'Color', helper.get_color('r'));
+plot(anl.tBinCenters(anl.validWindowInds), -hi.uR_neg_window, 'Color', helper.get_color('lr'));
 
 yTickScale= .1*fs;
 ytickValsDefault= [-yTickScale 0 yTickScale];
@@ -145,8 +145,8 @@ text(-.05, 1.01, 'x 10^3', 'Units', 'normalized');
 sp_ax(2)= subplot(234);
 yyaxis left;
 hold on;
-[~,~,lHan_sigPSD]= plot_dpss_psd(sig_window_nh, fs, 'xunit', 'khz', 'yrange', 50);
-set(lHan_sigPSD, 'Color', 1.2*get_color('gray'), 'LineWidth', plt.lw1);
+[~,~,lHan_sigPSD]= helper.plot_dpss_psd(sig_window_nh, fs, 'xunit', 'khz', 'yrange', 50);
+set(lHan_sigPSD, 'Color', 1.2*helper.get_color('gray'), 'LineWidth', plt.lw1);
 set(gca, 'YColor', 'k');
 text(.1, -50, 'F_0', 'HorizontalAlignment', 'center');
 text(0.7, -47, 'F_1', 'HorizontalAlignment', 'center');
@@ -162,12 +162,12 @@ xlab_han= xlabel('Frequency (kHz)', 'Units', 'normalized');
 xlab_han.Position(1)= 1.12;
 set(gca, 'XTick', plt.freqTick, 'TickLength', plt.tick_len, 'YColor', 'k');
 txtHan(2)= text(.05, .99, 'B', 'Units', 'normalized', 'FontWeight', 'bold');
-plot([nh.tailFreq nh.tailFreq], [nh.tailThresh nh.tipThresh], '-', 'LineWidth', plt.lw1, 'Color', get_color('b'));
+plot([nh.tailFreq nh.tailFreq], [nh.tailThresh nh.tipThresh], '-', 'LineWidth', plt.lw1, 'Color', helper.get_color('b'));
 plot(nh.tailFreq, nh.tailThresh-1, '^', 'LineWidth', plt.lw1, 'Color', 'b', 'MarkerSize', plt.mrkSize0);
 plot(nh.tailFreq, nh.tipThresh+1, 'v', 'LineWidth', plt.lw1, 'Color', 'b', 'MarkerSize', plt.mrkSize0);
 plot(nh.data.CF_Hz/1e3, nh.tipThresh-1, 'p', 'LineWidth', plt.lwCF, 'Color', 'b', 'MarkerSize', plt.mrkSizeCF);
 
-plot([hi.tailFreq hi.tailFreq], [hi.tailThresh hi.tipThresh], '-', 'LineWidth', plt.lw1, 'Color', get_color('r'));
+plot([hi.tailFreq hi.tailFreq], [hi.tailThresh hi.tipThresh], '-', 'LineWidth', plt.lw1, 'Color', helper.get_color('r'));
 plot(hi.tailFreq, hi.tailThresh-1, '^', 'LineWidth', plt.lw1, 'Color', 'r', 'MarkerSize', plt.mrkSize0);
 plot(hi.tailFreq, hi.tipThresh+1, 'v', 'LineWidth', plt.lw1, 'Color', 'r', 'MarkerSize', plt.mrkSize0);
 plot(hi.data.CF_Hz/1e3, hi.tipThresh-1, 'p', 'LineWidth', plt.lwCF, 'Color', 'r', 'MarkerSize', plt.mrkSizeCF);
@@ -176,17 +176,17 @@ ylabel('TC Thresh. (dB SPL)');
 sp_ax(3)= subplot(235);
 % yyaxis left;
 hold on;
-[Pxx_nh_dB,freq_nh,lHan_dT_PSD_nh]= plot_dpss_psd(nh.dT_window/rms(nh.dT_window), fs, 'xunit', 'khz');
-set(lHan_dT_PSD_nh, 'Color', get_color('b'), 'LineWidth', plt.lw1);
+[Pxx_nh_dB,freq_nh,lHan_dT_PSD_nh]= helper.plot_dpss_psd(nh.dT_window/rms(nh.dT_window), fs, 'xunit', 'khz');
+set(lHan_dT_PSD_nh, 'Color', helper.get_color('b'), 'LineWidth', plt.lw1);
 [~, max_ind_nh]= max(Pxx_nh_dB);
-arrowHan(1)= text(freq_nh(max_ind_nh), Pxx_nh_dB(max_ind_nh)+3, '\downarrow', 'Color', get_color('b'), 'HorizontalAlignment', 'center');
+arrowHan(1)= text(freq_nh(max_ind_nh), Pxx_nh_dB(max_ind_nh)+3, '\downarrow', 'Color', helper.get_color('b'), 'HorizontalAlignment', 'center');
 arrowTxtHan(1)= text(freq_nh(max_ind_nh), Pxx_nh_dB(max_ind_nh)+6, 'F_2', 'Color', 'k', 'HorizontalAlignment', 'center');
 
-[Pxx_hi_dB,freq_hi,lHan_dT_PSD_hi]= plot_dpss_psd(hi.dT_window/rms(hi.dT_window), fs, 'xunit', 'khz', 'yrange', 30);
-set(lHan_dT_PSD_hi, 'Color', get_color('lr'), 'LineWidth', plt.lw1);
+[Pxx_hi_dB,freq_hi,lHan_dT_PSD_hi]= helper.plot_dpss_psd(hi.dT_window/rms(hi.dT_window), fs, 'xunit', 'khz', 'yrange', 30);
+set(lHan_dT_PSD_hi, 'Color', helper.get_color('lr'), 'LineWidth', plt.lw1);
 [~, max_ind_hi]= max(Pxx_hi_dB);
-arrowHan(2)= text(freq_hi(max_ind_hi), Pxx_hi_dB(max_ind_hi)+3, '\downarrow', 'Color', get_color('r'), 'HorizontalAlignment', 'center');
-arrowTxtHan(2)= text(freq_hi(max_ind_hi), Pxx_hi_dB(max_ind_hi)+6, 'F_1', 'Color', get_color('k'), 'HorizontalAlignment', 'center');
+arrowHan(2)= text(freq_hi(max_ind_hi), Pxx_hi_dB(max_ind_hi)+3, '\downarrow', 'Color', helper.get_color('r'), 'HorizontalAlignment', 'center');
+arrowTxtHan(2)= text(freq_hi(max_ind_hi), Pxx_hi_dB(max_ind_hi)+6, 'F_1', 'Color', helper.get_color('k'), 'HorizontalAlignment', 'center');
 set(gca, 'YColor', 'k', 'XTick', plt.freqTick);
 ylabel('');
 ylim([-50 -22]);
@@ -214,8 +214,8 @@ CFcenters= [.5 1 2 4 8];
 
 sp_ax(4)= subplot(236);
 hold on;
-lHan(1)= plot(cf_kHz(nhInds), TTR_dB(nhInds), 'x', 'color', get_color('b'), 'MarkerSize', plt.mrkSize);
-lHan(2)= plot(cf_kHz(hiInds), TTR_dB(hiInds), '+', 'color', get_color('r'), 'MarkerSize', plt.mrkSize);
+lHan(1)= plot(cf_kHz(nhInds), TTR_dB(nhInds), 'x', 'color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
+lHan(2)= plot(cf_kHz(hiInds), TTR_dB(hiInds), '+', 'color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
 set(gca, 'xscale', 'log', 'xtick', CFcenters, 'TickLength', plt.tick_len);
 xlabel('CF (kHz)');
 ylabel('TTR (dB)');

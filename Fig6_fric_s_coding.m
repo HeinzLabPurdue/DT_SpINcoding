@@ -6,6 +6,8 @@ saveStats= 1;
 dirStruct.png= [pwd filesep 'final_figs' filesep];
 dirStruct.stats= [pwd filesep 'tables_for_stats' filesep];
 
+subtractSR= 1;
+
 figSize_cm= [15 5 17 15];
 figure_prop_name = {'PaperPositionMode','units','Position', 'Renderer'};
 figure_prop_val =  { 'auto'            ,'centimeters', figSize_cm, 'painters'};  % [Xcorner Ycorner Xwidth Ywidth]
@@ -30,11 +32,11 @@ hiChinInd= find(ismember([ [all_chinDanishData.chinID]', [all_chinDanishData.tra
 % Analysis parameters for /s/
 fs= 5e3;
 anl.tStart= 745e-3;
-anl.tEnd= 835e-3;
+anl.tEnd= 845e-3;
 anl.tZoom= 25e-3;
 anl.winHardOnset= 10e-3;
-anl.winSoftOnset= 00e-3;
-anl.winSustained= 80e-3;
+anl.winSoftOnset= 15e-3;
+anl.winSustained= 30e-3;
 anl.tBinEdges= (anl.tStart-anl.tZoom):(1/fs):(anl.tEnd+anl.tZoom);
 anl.tBinCenters= ( anl.tBinEdges(1:end-1) + anl.tBinEdges(2:end) )/2;
 anl.tValidWindow= (anl.tBinCenters>anl.tStart) & (anl.tBinCenters<anl.tEnd);
@@ -51,8 +53,8 @@ demo.hi_uRate_neg= histcounts( cell2mat(demo.hi_data.neg) - demo.delay, anl.tBin
 
 %% Read signal
 [sig.data, sig.fs]= audioread(['mat_data' filesep 'FLN_Stim_S_P.wav']);
-sig.data= gen_resample(sig.data, sig.fs, 20e3);
-sig.data= gen_rescale(sig.data, 70);
+sig.data= helper.gen_resample(sig.data, sig.fs, 20e3);
+sig.data= helper.gen_rescale(sig.data, 70);
 sig.fs= 20e3;
 sig.time= (1:length(sig.data))/sig.fs;
 sig.fric_inds= (sig.time> anl.tStart) & (sig.time<anl.tEnd);
@@ -65,17 +67,31 @@ timeStruct.Onset.Start= anl.tStart;
 timeStruct.Onset.HardEnd= timeStruct.Onset.Start + anl.winHardOnset; % Using values from Delgutte and Kiang 1984 (Fricative coding)
 timeStruct.Onset.SoftEnd= timeStruct.Onset.HardEnd + anl.winSoftOnset;
 
-timeStruct.Sustained.Start= anl.tEnd-anl.winSustained;
-timeStruct.Sustained.End= anl.tEnd;
+timeStruct.Sustained.SoftStart= anl.tStart;
+timeStruct.Sustained.HardStart= (anl.tStart+anl.tEnd)/2 - anl.winSustained/2;
+timeStruct.Sustained.HardEnd= (anl.tStart+anl.tEnd)/2 + anl.winSustained/2;
+timeStruct.Sustained.SoftEnd= anl.tEnd;
 
-OnsetInds.Hard= (anl.tBinCenters> (timeStruct.Onset.Start+demo.latency_correction)) & (anl.tBinCenters<(timeStruct.Onset.HardEnd+demo.latency_correction)); % 10 ms in Delgutte's paper
-OnsetInds.Soft= 0*OnsetInds.Hard;
-temp_soft_start= find(anl.tBinCenters>=(timeStruct.Onset.HardEnd+demo.latency_correction), 1);
-temp_soft_end= find(anl.tBinCenters<timeStruct.Onset.SoftEnd+demo.latency_correction, 1, 'last');
-OnsetInds.Soft(temp_soft_start:temp_soft_end)= linspace(1, 0, temp_soft_end - temp_soft_start + 1);
-
+OnsetInds.Hard= (anl.tBinCenters> (timeStruct.Onset.Start+demo.latency_correction)) & (anl.tBinCenters<(timeStruct.Onset.HardEnd+demo.latency_correction)); % 10 ms flat + 50 ms linearly decreasing in Delgutte's paper
+OnsetInds.Soft= zeros(size(anl.tBinCenters)); % Initialize 
+onset_temp_soft_start= find(anl.tBinCenters>=(timeStruct.Onset.HardEnd+demo.latency_correction), 1);
+onset_temp_soft_end= find(anl.tBinCenters<timeStruct.Onset.SoftEnd+demo.latency_correction, 1, 'last');
+OnsetInds.Soft(onset_temp_soft_start:onset_temp_soft_end)= linspace(1, 0, onset_temp_soft_end - onset_temp_soft_start + 1);
 anl.OnsetMask= OnsetInds.Hard + OnsetInds.Soft;
-anl.SustainedMask= (anl.tBinCenters > (timeStruct.Sustained.Start+demo.latency_correction)) & (anl.tBinCenters < (timeStruct.Sustained.End+demo.latency_correction)) ; % 10 ms in Delgutte's paper
+
+sustained_temp_soft_start= dsearchn(anl.tBinCenters(:), timeStruct.Sustained.SoftStart+demo.latency_correction); 
+sustained_temp_hard_start= dsearchn(anl.tBinCenters(:), timeStruct.Sustained.HardStart+demo.latency_correction); 
+sustained_temp_hard_end= dsearchn(anl.tBinCenters(:), timeStruct.Sustained.HardEnd+demo.latency_correction); 
+sustained_temp_soft_end= dsearchn(anl.tBinCenters(:), timeStruct.Sustained.SoftEnd+demo.latency_correction); 
+
+OnsetInds.SoftStart= zeros(size(anl.tBinCenters)); % Initialize 
+OnsetInds.Hard= zeros(size(anl.tBinCenters)); 
+OnsetInds.SoftEnd= zeros(size(anl.tBinCenters)); 
+OnsetInds.SoftStart(sustained_temp_soft_start:sustained_temp_hard_start)= linspace(0, 1, sustained_temp_hard_start - sustained_temp_soft_start + 1);
+OnsetInds.Hard((sustained_temp_hard_start+1):(sustained_temp_hard_end-1))= 1;
+OnsetInds.SoftEnd(sustained_temp_hard_end:sustained_temp_soft_end)= linspace(1, 0, sustained_temp_soft_end - sustained_temp_hard_end + 1);
+
+anl.SustainedMask= (OnsetInds.SoftStart + OnsetInds.Hard + OnsetInds.SoftEnd);
 
 %% Plot
 plt.lw1= 1;
@@ -101,8 +117,8 @@ clf;
 sp_ax(1)= subplot(3, 2, 1);
 yyaxis right;
 hold on;
-[Pxx,Freq_xx,lHan]= plot_dpss_psd(sig.data(sig.fric_inds), sig.fs, 'nw', anl.nw, 'xunit', 'khz');
-set(lHan, 'color', get_color('gray'), 'linew', plt.lw1);
+[Pxx,Freq_xx,lHan]= helper.plot_dpss_psd(sig.data(sig.fric_inds), sig.fs, 'nw', anl.nw, 'xunit', 'khz');
+set(lHan, 'color', helper.get_color('gray'), 'linew', plt.lw1);
 set(gca, 'YColor', 'k', 'YTick', plt.ytick_psd);
 xlabel('');
 ylabel('PSD (dB/Hz)');
@@ -110,7 +126,7 @@ ylabel('PSD (dB/Hz)');
 yyaxis left;
 plot(demo.nh_data.TC.freqkHz, demo.nh_data.TC.TCfit, '-', 'Color', 'b', 'linew', plt.lw2);
 plot(demo.hi_data.TC.freqkHz, demo.hi_data.TC.TCfit, '-', 'Color', 'r', 'linew', plt.lw2);
-set(gca, 'YColor', get_color('k'), 'XTick', plt.xtick_freq_val);
+set(gca, 'YColor', helper.get_color('k'), 'XTick', plt.xtick_freq_val);
 ylim([0 120]);
 xlim([.75 10]);
 ylabel('TC Thresh. (dB SPL)');
@@ -118,18 +134,18 @@ txtHan(1)= text(.05, .95, 'A', 'Units', 'normalized', 'FontWeight', 'bold');
 
 sp_ax(2)= subplot(3, 2, 2);
 hold on;
-plot(anl.tBinCenters, Ashift+demo.nh_uRate_pos, 'Color', get_color('b'), 'linew', plt.lw1);
-plot(anl.tBinCenters, Ashift+-demo.nh_uRate_neg, 'Color', get_color('lb'), 'linew', plt.lw1);
-plot(anl.tBinCenters, demo.hi_uRate_pos, 'Color', get_color('r'), 'linew', plt.lw1);
-plot(anl.tBinCenters, -demo.hi_uRate_neg, 'Color', get_color('lr'), 'linew', plt.lw1);
-plot(sig.time(sig.fric_inds_zoom), -Ashift+sig.data(sig.fric_inds_zoom), 'Color', get_color('gray'), 'linew', plt.lw1);
+plot(anl.tBinCenters, Ashift+demo.nh_uRate_pos, 'Color', helper.get_color('b'), 'linew', plt.lw1);
+plot(anl.tBinCenters, Ashift+-demo.nh_uRate_neg, 'Color', helper.get_color('lb'), 'linew', plt.lw1);
+plot(anl.tBinCenters, demo.hi_uRate_pos, 'Color', helper.get_color('r'), 'linew', plt.lw1);
+plot(anl.tBinCenters, -demo.hi_uRate_neg, 'Color', helper.get_color('lr'), 'linew', plt.lw1);
+plot(sig.time(sig.fric_inds_zoom), -Ashift+sig.data(sig.fric_inds_zoom), 'Color', helper.get_color('gray'), 'linew', plt.lw1);
 ylabel('Rate (spikes/s)');
 set(gca, 'YTick', ytickVals, 'YTickLabel', ytickLabs);
 ylim([-0.7 .85]);
 
 yyaxis right;
-plot(anl.tBinCenters, anl.OnsetMask, '-', 'Color', get_color('c'), 'linew', plt.lw2);
-plot(anl.tBinCenters, anl.SustainedMask, '-', 'Color', get_color('m'), 'linew', plt.lw2);
+plot(anl.tBinCenters, anl.OnsetMask, '-', 'Color', helper.get_color('c'), 'linew', plt.lw2);
+plot(anl.tBinCenters, anl.SustainedMask, '-', 'Color', helper.get_color('m'), 'linew', plt.lw2);
 ylim([-0.075 5]);
 set(gca, 'YTick', [0 1], 'YColor', 'k');
 xlim([anl.tStart-anl.tZoom anl.tEnd+anl.tZoom]);
@@ -163,7 +179,10 @@ all_hearing= cell(length([all_chinDanishData.chinID]), 1);
 all_hearing(nhInds)= {'NH'};
 all_hearing(hiInds)= {'HI'};
 
-
+if subtractSR
+    onsetRates= onsetRates(:)-all_SR(:);
+    sustainedRates= sustainedRates(:)-all_SR(:);
+end
 
 cfRange_min_kHz= 3;
 cfRange_max_kHz= 8;
@@ -179,47 +198,54 @@ ylabel('PSD (dB/Hz)');
 
 hold on;
 
-plot(all_cf_kHz(nhInds), onsetRates(nhInds), 'x', 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(nhInds), onsetRates(nhInds), 'x', 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan] = helper.octAVG(all_cf_kHz(nhInds), onsetRates(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw2, 'color', 'b');
 
-[~, ~, lHan] = helper.octAVG(all_cf_kHz(nhInds), all_SR(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
-set(lHan, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'b');
+if ~subtractSR
+    [~, ~, lHan] = helper.octAVG(all_cf_kHz(nhInds), all_SR(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
+    set(lHan, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'b');
+end
 
-plot(all_cf_kHz(hiInds), onsetRates(hiInds), '+', 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(hiInds), onsetRates(hiInds), '+', 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan] = helper.octAVG(all_cf_kHz(hiInds), onsetRates(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw2, 'color', 'r');
 
-[~, ~, lHan] = helper.octAVG(all_cf_kHz(hiInds), all_SR(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
-set(lHan, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'r');
-
+if ~subtractSR
+    [~, ~, lHan] = helper.octAVG(all_cf_kHz(hiInds), all_SR(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
+    set(lHan, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'r');
+end
 
 set(gca, 'XScale', 'log', 'YColor', 'k', 'XTick', plt.xtick_freq_val);
 ylabel('Onset rate (spikes/s)');
 txtHan(3)= text(.05, .95, 'C', 'Units', 'normalized', 'FontWeight', 'bold');
 box off;
+axis tight;
 
 sp_ax(5)= subplot(3, 2, 5);
 
 hold on;
 
-plot(all_cf_kHz(nhInds), sustainedRates(nhInds), 'x', 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(nhInds), sustainedRates(nhInds), 'x', 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan] = helper.octAVG(all_cf_kHz(nhInds), sustainedRates(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw2, 'color', 'b');
 
-[~, ~, lHan] = helper.octAVG(all_cf_kHz(nhInds), all_SR(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
-set(lHan, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'b');
+if ~subtractSR
+    [~, ~, lHan] = helper.octAVG(all_cf_kHz(nhInds), all_SR(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
+    set(lHan, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'b');
+end
 
-plot(all_cf_kHz(hiInds), sustainedRates(hiInds), '+', 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(hiInds), sustainedRates(hiInds), '+', 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan] = helper.octAVG(all_cf_kHz(hiInds), sustainedRates(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw2, 'color', 'r');
 
-[~, ~, lHan] = helper.octAVG(all_cf_kHz(hiInds), all_SR(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
-set(lHan, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'r');
+if ~subtractSR
+    [~, ~, lHan] = helper.octAVG(all_cf_kHz(hiInds), all_SR(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
+    set(lHan, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'r');
+end
 
 [~, pSus]= ttest2(sustainedRates(nhInds&valid_cf), sustainedRates(hiInds&valid_cf));
 fprintf('Sustained p=%.3f: %.1f < CF < %.1f kHz\n', pSus, cfRange_min_kHz, cfRange_max_kHz);
-
 
 
 set(gca, 'XScale', 'log', 'YColor', 'k', 'XTick', plt.xtick_freq_val);
@@ -228,17 +254,28 @@ ylabel('Sustained rate (spikes/s)');
 txtHan(4)= text(.05, .95, 'D', 'Units', 'normalized', 'FontWeight', 'bold');
 box off;
 
-legLine(1)= plot(nan, nan, '-', 'color', 'b', 'linew', plt.lw2);
-legLine(2)= plot(nan, nan, '--', 'color', 'b', 'linew', plt.lw1);
-legLine(3)= plot(nan, nan, '-', 'color', 'r', 'linew', plt.lw2);
-legLine(4)= plot(nan, nan, '--', 'color', 'r', 'linew', plt.lw1);
-[legHan, icons]= legend(legLine, 'NH (Driven)', 'NH (Spont.)', 'HI (Driven)', 'HI (Spont.)', 'location', 'northwest', 'box', 'off');
-legHan.FontSize= 9;
-icons(5).XData= mean(icons(5).XData) + [-0.1 +.15];
-icons(7).XData= mean(icons(7).XData) + [-0.1 +.15];
-icons(9).XData= mean(icons(9).XData) + [-0.1 +.15];
-icons(11).XData= mean(icons(11).XData) + [-0.1 +.15];
-legHan.Position(1:2)= [.1 .23];
+if ~subtractSR
+    legLine(1)= plot(nan, nan, '-', 'color', 'b', 'linew', plt.lw2);
+    legLine(2)= plot(nan, nan, '--', 'color', 'b', 'linew', plt.lw1);
+    legLine(3)= plot(nan, nan, '-', 'color', 'r', 'linew', plt.lw2);
+    legLine(4)= plot(nan, nan, '--', 'color', 'r', 'linew', plt.lw1);
+    [legHan, icons]= legend(legLine, 'NH (Driven)', 'NH (Spont.)', 'HI (Driven)', 'HI (Spont.)', 'location', 'northwest', 'box', 'off');
+    legHan.FontSize= 9;
+    icons(5).XData= mean(icons(5).XData) + [-0.1 +.15];
+    icons(7).XData= mean(icons(7).XData) + [-0.1 +.15];
+    icons(9).XData= mean(icons(9).XData) + [-0.1 +.15];
+    icons(11).XData= mean(icons(11).XData) + [-0.1 +.15];
+    legHan.Position(1:2)= [.1 .23];
+else
+    legLine(1)= plot(nan, nan, '-', 'color', 'b', 'linew', plt.lw2);
+    legLine(2)= plot(nan, nan, '-', 'color', 'r', 'linew', plt.lw2);
+    [legHan, icons]= legend(legLine, 'NH', 'HI', 'location', 'northwest', 'box', 'off');
+    legHan.FontSize= 9;
+    icons(3).XData= mean(icons(3).XData) + [-0.08 +.2];
+    icons(5).XData= mean(icons(5).XData) + [-0.08 +.2];
+    legHan.Position(1:2)= [.06 .23];   
+    axis tight;
+end
 
 
 linkaxes(sp_ax([1 3 5]), 'x');
@@ -306,8 +343,8 @@ for dirVar= 1:length(allDirs)
             end
             
             ffr_uV_scaleFactor= 1e6/temp_data.AD_Data.Gain;
-            s_data_pos= ffr_uV_scaleFactor*gen_resample(s_data_pos, fs_data, fs);
-            s_data_neg= ffr_uV_scaleFactor*gen_resample(s_data_neg, fs_data, fs);
+            s_data_pos= ffr_uV_scaleFactor*helper.gen_resample(s_data_pos, fs_data, fs);
+            s_data_neg= ffr_uV_scaleFactor*helper.gen_resample(s_data_neg, fs_data, fs);
             
             curFilt= helper.get_filter(fs);
             s_data_pos_filt= filtfilt(curFilt, s_data_pos);
@@ -326,7 +363,7 @@ for dirVar= 1:length(allDirs)
             OnsetInds_Hard= (t_data> (timeStruct.Onset.Start+FFR_latency_correction)) & (t_data<(timeStruct.Onset.FFR_HardEnd+FFR_latency_correction)); % 10 ms in Delgutte's paper
             
             ffr_OnsetMask= (OnsetInds_Hard==1);
-            ffr_SustainedMask= (t_data > (timeStruct.Sustained.Start+FFR_latency_correction)) & (t_data < (timeStruct.Sustained.End+FFR_latency_correction)) ; % 10 ms in Delgutte's paper
+            ffr_SustainedMask= (t_data > (timeStruct.Sustained.SoftStart+FFR_latency_correction)) & (t_data < (timeStruct.Sustained.SoftEnd+FFR_latency_correction)) ; % 10 ms in Delgutte's paper
             
             FFR_onset(dirVar)= range(s_data_env(ffr_OnsetMask)) ;
             FFR_onset_nf(dirVar)= range(s_data_tfs(ffr_SustainedMask));
@@ -337,23 +374,23 @@ for dirVar= 1:length(allDirs)
                 yyaxis left
                 hold on;
                 Astim= 4; % uV
-                plot(t_data, Astim+s_data_env, '-', 'Color', get_color('b'), 'linew', plt.lw1);
-                plot(sig.time, -.75*Astim + sig.data / max(abs(sig.data)) * Astim / 3, '-', 'Color', get_color('gray'));
-                set(gca, 'YColor', get_color('k'));
-                ylabel('FFR_{ENV} Amp (\muV)');
+                plot(t_data, Astim+s_data_env, '-', 'Color', helper.get_color('b'), 'linew', plt.lw1);
+                plot(sig.time, -.75*Astim + sig.data / max(abs(sig.data)) * Astim / 3, '-', 'Color', helper.get_color('gray'));
+                set(gca, 'YColor', helper.get_color('k'));
+                ylabel('SBR_{ENV} Amp (\muV)');
                 
                 
                 yyaxis right;
                 hold on;
-                plot(t_data, ffr_OnsetMask, '-', 'color', get_color('c'), 'linew', plt.lw2)
+                plot(t_data, ffr_OnsetMask, '-', 'color', helper.get_color('c'), 'linew', plt.lw2)
                 ylim([-.5 5]);
                 xlim([0.55 0.9]);
-                set(gca, 'YColor', get_color('k'), 'YTick', [0 1]);
+                set(gca, 'YColor', helper.get_color('k'), 'YTick', [0 1]);
                 ylabel('Onset mask');
             elseif ChinID==ffr_demo.hi_ffr_chin
                 yyaxis left
                 hold on;
-                plot(t_data, s_data_env, '-', 'Color', get_color('r'), 'linew', plt.lw1);
+                plot(t_data, s_data_env, '-', 'Color', helper.get_color('r'), 'linew', plt.lw1);
                 txtHan(5)= text(.05, .95, 'E', 'Units', 'normalized', 'FontWeight', 'bold');
                 xlabel('Time (s)');
             end
@@ -377,8 +414,9 @@ boxplot(FFR_onset, dirCellGroup, 'GroupOrder', {'NH', 'HI'});
 plot([1 2], [5.2 5.2], 'k-', 'linew', 1);
 plot(1.5, 5.65, 'kp', 'markersize', 6, 'linew', 1);
 ylim([.5 5.9])
+xlim([.5 2.5]);
 
-ylabel('FFR Onset Amp (\muV)');
+ylabel('SBR Onset Amp (\muV)');
 txtHan(6)= text(.05, .95, 'F', 'Units', 'normalized', 'FontWeight', 'bold');
 box off;
 
@@ -389,8 +427,6 @@ nhChinsInds= strcmp(cellstr(dirCellGroup), 'NH');
 set(findall(gcf,'-property','FontSize'),'FontSize', 9);
 set(findall(gcf,'-property','TickLength'),'TickLength', plt.tick_len);
 set(txtHan, 'FontSize', 11);
-
-
 
 %% define new axes for AB
 Xcorner= .07;
@@ -427,7 +463,7 @@ drawnow
 
 
 if saveFig
-    print([dirStruct.png 'Fig6_fric_s'], '-dpng',  '-r600');
+    print([dirStruct.png 'Fig6_fric_s_rel2SR'], '-dpng',  '-r600');
 end
 
 %% table for FFR 
@@ -440,5 +476,10 @@ var_ffr_OnsetRate= FFR_onset(:);
 Fig6_tbl_s_coding_FFR= table(var_ffr_chinID(:),   var_ffr_hearingStatus(:),   var_ffr_OnsetRate(:), ...
     'VariableNames', {          'ChinID',              'HearingStatus',          'OnRate'});
 if saveStats
-    writetable(Fig6_tbl_s_coding_FFR, [dirStruct.stats 'Fig6_FFR_s_all.txt'], 'Delimiter', 'tab');
+    
+    if ~subtractSR
+        writetable(Fig6_tbl_s_coding_FFR, [dirStruct.stats 'Fig6_FFR_s_all_rel2SR.txt'], 'Delimiter', 'tab');
+    else
+        writetable(Fig6_tbl_s_coding_FFR, [dirStruct.stats 'Fig6_FFR_s_all.txt'], 'Delimiter', 'tab');
+    end
 end

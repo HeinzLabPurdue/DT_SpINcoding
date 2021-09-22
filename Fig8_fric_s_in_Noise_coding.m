@@ -3,10 +3,12 @@ clear;
 clc;
 
 saveFig= 1;
-saveStats= 1;
+saveStats= 0;
 dirStruct.png= [pwd filesep 'final_figs' filesep];
 dirStruct.stats= [pwd filesep 'tables_for_stats' filesep];
 dirStruct.loading_dir= ['ANF_Data' filesep];
+
+use_LinSub1_QuadSub0= 1;
 
 chinIDs= [321 322 325 338 341 343 346 347 354 355 358 360 361 362 367 370 373 379];
 HIchins= [358 360 361 362 367 370];
@@ -92,7 +94,7 @@ parfor iterVar=1:size(unique_chin_track_unit_snr_mat,1) % 18 is the first 0 dB S
         cur_delay= 0;
     end
     
-    [S_stim_plus, fs_stim]=audioread(curMetaData.StimsFNames{1,1}{1});
+    [S_stim_plus, fs_stim]=audioread(fullfile('stimuli', 'SNR_0', 'FLN_Stim_S_P.wav'));
     t_stim=(1:length(S_stim_plus))/fs_stim;
     dur_stim=length(S_stim_plus)/fs_stim;
     
@@ -162,7 +164,12 @@ corr_s_sn= [fricative_corr_Data.s_sn];
 corr_s_n= [fricative_corr_Data.s_n];
 rms_s= [fricative_corr_Data.rms_S];
 rms_sn= [fricative_corr_Data.rms_SN];
-corr_snr_corrected= (corr_s_sn-corr_s_n);
+
+if use_LinSub1_QuadSub0
+    corr_snr_2plot= (corr_s_sn-corr_s_n);
+else 
+    corr_snr_2plot= sqrt(corr_s_sn.^2 - corr_s_n.^2);
+end
 
 snrs2use= sort(unique([fricative_corr_Data.SNR]), 'descend');
 
@@ -215,11 +222,11 @@ demo.hi_LPenv_N= 4*filtfilt(curFilt, ( demo.hi_uRate_pos_N + demo.hi_uRate_neg_N
 snr2use = 0;
 noise2use = 'SSN';
 
-[stimS, fsSig]=audioread('/media/parida/DATAPART1/Matlab/ExpData/MatData/SP-2017_09_09-Q321_AN_NH/Signals/MH/SNRenv/SNR_0/FLN_Stim_S_P.wav');
-[stimN, ~]=audioread(sprintf('/media/parida/DATAPART1/Matlab/ExpData/MatData/SP-2017_09_09-Q321_AN_NH/Signals/MH/SNRenv/SNR_0/%s_Stim0dB_N_P.wav', noise2use));
+[stimS, fsSig]=audioread(fullfile('stimuli', 'SNR_0', 'FLN_Stim_S_P.wav'));
+[stimN, ~]=audioread(fullfile('stimuli', 'SNR_0', sprintf('%s_Stim0dB_N_P.wav', noise2use)));
 
-stimS= gen_rescale(stimS, 65);
-stimN= gen_rescale(stimN, 65 - snr2use);
+stimS= helper.gen_rescale(stimS, 65);
+stimN= helper.gen_rescale(stimN, 65 - snr2use);
 tStim= (1:length(stimS))/fsSig;
 
 tValidInds= tStim>anl.tStart & tStim<anl.tEnd;
@@ -261,19 +268,19 @@ yyaxis left;
 hold on;
 plot(demo.nh_data.TC.freqkHz, demo.nh_data.TC.TCfit, '-', 'Color', 'b', 'linew', plt.lw2);
 plot(demo.hi_data.TC.freqkHz, demo.hi_data.TC.TCfit, '-', 'Color', 'r', 'linew', plt.lw2);
-set(gca, 'YColor', get_color('k'), 'XTick', plt.xtick_vals_cf_kHz, 'yTick', plt.ytick_tc);
+set(gca, 'YColor', helper.get_color('k'), 'XTick', plt.xtick_vals_cf_kHz, 'yTick', plt.ytick_tc);
 ylim([20 140]);
 xlim([.495 10.5]);
 ylab_tc_han= ylabel('TC Thresh. (dB SPL)', 'Units', 'normalized');
 
 
 yyaxis right;
-[~,~, lHan(1)]= plot_dpss_psd(stimS(tValidInds), fsSig, 'nw', plt.nw, 'xunit', 'khz');
+[~,~, lHan(1)]= helper.plot_dpss_psd(stimS(tValidInds), fsSig, 'nw', plt.nw, 'xunit', 'khz');
 hold on
-set(lHan(1), 'color', get_color('g'), 'linew', plt.lw1);
-[~,~, lHan(2)]= plot_dpss_psd(stimN(tValidInds), fsSig, 'nw', plt.nw, 'xunit', 'khz');
+set(lHan(1), 'color', helper.get_color('g'), 'linew', plt.lw1);
+[~,~, lHan(2)]= helper.plot_dpss_psd(stimN(tValidInds), fsSig, 'nw', plt.nw, 'xunit', 'khz');
 set(gca, 'XTick', plt.xtick_vals_cf_kHz, 'YColor', 'k', 'YTick', plt.ytick_psd);
-set(lHan(2), 'color', get_color('prp'), 'linew', plt.lw1);
+set(lHan(2), 'color', helper.get_color('prp'), 'linew', plt.lw1);
 [legHanA, iconsA]= legend('TC-NH', 'TC-HI', 'S (/s/)', 'N', 'box', 'off', 'Location', 'southwest');
 iconsA(5).XData= mean(iconsA(5).XData) + [0 +.25];
 iconsA(7).XData= mean(iconsA(7).XData) + [0 +.25];
@@ -283,7 +290,7 @@ legHanA.Position(1:2)= [.04 .75];
 
 pink_freq= [.5 1 2 4 8 12];
 pink_amp= polyval([-3 -67], log2(pink_freq ./ min(pink_freq))); 
-plot(pink_freq, pink_amp, '--', 'color', get_color('pink'), 'linew', 2);
+plot(pink_freq, pink_amp, '--', 'color', helper.get_color('pink'), 'linew', 2);
 
 xlim([.5 11]);
 ylim([-88 -58]);
@@ -294,17 +301,17 @@ ttlHan(1)= text(plt.txtHan_X, plt.txtHan_Y, 'A', 'Units', 'normalized');
 sp_ax(3)= subplot(length(snrs2use), 2, 3);
 hold on;
 plot(anl.tBinCenters, demo.nhAshift + demo.nh_uRate_pos_S, 'color', plt.colGray);
-plot(anl.tBinCenters, demo.nhAshift + demo.nh_LPenv_S, 'color', get_color('k'), 'linew', plt.lw2);
+plot(anl.tBinCenters, demo.nhAshift + demo.nh_LPenv_S, 'color', helper.get_color('k'), 'linew', plt.lw2);
 text(anl.tEnd+plt.txt_shift_time, demo.nhAshift+plt.txt_shift_Y_nh, 'S', 'FontWeight', 'bold');
 text(anl.tEnd+plt.txt_shift_time, 0+plt.txt_shift_Y_nh, 'SN', 'FontWeight', 'bold');
 text(anl.tEnd+plt.txt_shift_time, -demo.nhAshift+plt.txt_shift_Y_nh, 'N', 'FontWeight', 'bold');
 
 plot(anl.tBinCenters, demo.nh_uRate_pos_SN, 'color', plt.colGray);
-plot(anl.tBinCenters, demo.nh_LPenv_SN, 'color', get_color('k'), 'linew', plt.lw2);
+plot(anl.tBinCenters, demo.nh_LPenv_SN, 'color', helper.get_color('k'), 'linew', plt.lw2);
 
 plot(anl.tBinCenters, -demo.nhAshift + demo.nh_uRate_pos_N, 'color', plt.colGray);
-plot(anl.tBinCenters, -demo.nhAshift + demo.nh_LPenv_N, 'color', get_color('k'), 'linew', plt.lw2);
-plot(tStim(tPlotInds), -1.5*demo.nhAshift + stimS(tPlotInds)/max(stimS(tPlotInds))*demo.nhAshift/5, 'color', get_color('g'));
+plot(anl.tBinCenters, -demo.nhAshift + demo.nh_LPenv_N, 'color', helper.get_color('k'), 'linew', plt.lw2);
+plot(tStim(tPlotInds), -1.5*demo.nhAshift + stimS(tPlotInds)/max(stimS(tPlotInds))*demo.nhAshift/5, 'color', helper.get_color('g'));
 ttlHan(3)= text(plt.txtHan_X, plt.txtHan_Y, 'B. NH (0 dB SNR)', 'Units', 'normalized');
 ylim([-.52 .5]);
 plot([anl.tStart anl.tStart], [min(ylim) max(ylim)], 'm-.', 'linew', plt.lw0);
@@ -321,19 +328,19 @@ sp_ax(5)= subplot(length(snrs2use), 2, 5);
 hold on;
 
 plot(anl.tBinCenters, demo.hiAshift + demo.hi_uRate_pos_S, 'color', plt.colGray);
-plot(anl.tBinCenters, demo.hiAshift + demo.hi_LPenv_S, 'color', get_color('k'), 'linew', plt.lw2);
+plot(anl.tBinCenters, demo.hiAshift + demo.hi_LPenv_S, 'color', helper.get_color('k'), 'linew', plt.lw2);
 
 plot(anl.tBinCenters, demo.hi_uRate_pos_SN, 'color', plt.colGray);
-plot(anl.tBinCenters, demo.hi_LPenv_SN, 'color', get_color('k'), 'linew', plt.lw2);
+plot(anl.tBinCenters, demo.hi_LPenv_SN, 'color', helper.get_color('k'), 'linew', plt.lw2);
 
 plot(anl.tBinCenters, -demo.hiAshift + demo.hi_uRate_pos_N, 'color', plt.colGray);
-plot(anl.tBinCenters, -demo.hiAshift + demo.hi_LPenv_N, 'color', get_color('k'), 'linew', plt.lw2);
+plot(anl.tBinCenters, -demo.hiAshift + demo.hi_LPenv_N, 'color', helper.get_color('k'), 'linew', plt.lw2);
 
 text(anl.tEnd+plt.txt_shift_time, demo.hiAshift+plt.txt_shift_Y_hi, 'S', 'FontWeight', 'bold');
 text(anl.tEnd+plt.txt_shift_time, 0+plt.txt_shift_Y_hi, 'SN', 'FontWeight', 'bold');
 text(anl.tEnd+plt.txt_shift_time, -demo.hiAshift+plt.txt_shift_Y_hi, 'N', 'FontWeight', 'bold');
 
-plot(tStim(tPlotInds), -1.6*demo.hiAshift + stimS(tPlotInds)/max(stimS(tPlotInds))*demo.hiAshift/5, 'color', get_color('g'), 'linew', plt.lw0);
+plot(tStim(tPlotInds), -1.6*demo.hiAshift + stimS(tPlotInds)/max(stimS(tPlotInds))*demo.hiAshift/5, 'color', helper.get_color('g'), 'linew', plt.lw0);
 ylim([-1.6 2]);
 plot([anl.tStart anl.tStart], [min(ylim) max(ylim)], 'm-.', 'linew', plt.lw0);
 plot([anl.tEnd anl.tEnd], [min(ylim) max(ylim)], 'm-.', 'linew', plt.lw0);
@@ -348,8 +355,8 @@ set(gca, 'YTick', ytickVals, 'YTickLabel', ytickLabs);
 minCorrVal= 1e-3;
 corrYtick_vals= [.001 .01 .1];
 
-corr_snr_raw= corr_snr_corrected;
-corr_snr_corrected(corr_snr_corrected<minCorrVal)= minCorrVal;
+corr_snr_raw= corr_snr_2plot;
+corr_snr_2plot(corr_snr_2plot<minCorrVal)= minCorrVal;
 
 SPletters= 'DEF';
 for snrVar= 1:length(snrs2use)
@@ -362,20 +369,20 @@ for snrVar= 1:length(snrs2use)
     figure(1)
     sp_ax(2*snrVar)= subplot(length(snrs2use), 2, 2*snrVar);
     hold on;
-    plot(CF_kHz(hsrInds & nhInds & curSNRinds), corr_snr_corrected(hsrInds & nhInds & curSNRinds), '*', 'Color', get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw0);
-    [~, ~, lHan_nh_hsr] = helper.octAVG(CF_kHz(hsrInds & nhInds & curSNRinds), corr_snr_corrected(hsrInds & nhInds & curSNRinds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
+    plot(CF_kHz(hsrInds & nhInds & curSNRinds), corr_snr_2plot(hsrInds & nhInds & curSNRinds), '*', 'Color', helper.get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw0);
+    [~, ~, lHan_nh_hsr] = helper.octAVG(CF_kHz(hsrInds & nhInds & curSNRinds), corr_snr_2plot(hsrInds & nhInds & curSNRinds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
     set(lHan_nh_hsr, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'b');
     
-    plot(CF_kHz(lmsrInds & nhInds & curSNRinds), corr_snr_corrected(lmsrInds & nhInds & curSNRinds), 's', 'Color', get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw0);
-    [~, ~, lHan_nh_lmsr] = helper.octAVG(CF_kHz(lmsrInds & nhInds & curSNRinds), corr_snr_corrected(lmsrInds & nhInds & curSNRinds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
+    plot(CF_kHz(lmsrInds & nhInds & curSNRinds), corr_snr_2plot(lmsrInds & nhInds & curSNRinds), 's', 'Color', helper.get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw0);
+    [~, ~, lHan_nh_lmsr] = helper.octAVG(CF_kHz(lmsrInds & nhInds & curSNRinds), corr_snr_2plot(lmsrInds & nhInds & curSNRinds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
     set(lHan_nh_lmsr, 'LineStyle', '-', 'LineWidth', plt.lw2, 'color', 'b');
     
-    plot(CF_kHz(hsrInds & hiInds & curSNRinds), corr_snr_corrected(hsrInds & hiInds & curSNRinds), '*', 'Color', get_color('r'), 'markersize', plt.mrkSize, 'linew', plt.lw0);
-    [~, ~, lHan_nh_hsr] = helper.octAVG(CF_kHz(hsrInds & hiInds & curSNRinds), corr_snr_corrected(hsrInds & hiInds & curSNRinds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
+    plot(CF_kHz(hsrInds & hiInds & curSNRinds), corr_snr_2plot(hsrInds & hiInds & curSNRinds), '*', 'Color', helper.get_color('r'), 'markersize', plt.mrkSize, 'linew', plt.lw0);
+    [~, ~, lHan_nh_hsr] = helper.octAVG(CF_kHz(hsrInds & hiInds & curSNRinds), corr_snr_2plot(hsrInds & hiInds & curSNRinds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
     set(lHan_nh_hsr, 'LineStyle', '--', 'LineWidth', plt.lw1, 'color', 'r');
     
-    plot(CF_kHz(lmsrInds & hiInds & curSNRinds), corr_snr_corrected(lmsrInds & hiInds & curSNRinds), 's', 'Color', get_color('r'), 'markersize', plt.mrkSize, 'linew', plt.lw0);
-    [~, ~, lHan_nh_lmsr] = helper.octAVG(CF_kHz(lmsrInds & hiInds & curSNRinds), corr_snr_corrected(lmsrInds & hiInds & curSNRinds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
+    plot(CF_kHz(lmsrInds & hiInds & curSNRinds), corr_snr_2plot(lmsrInds & hiInds & curSNRinds), 's', 'Color', helper.get_color('r'), 'markersize', plt.mrkSize, 'linew', plt.lw0);
+    [~, ~, lHan_nh_lmsr] = helper.octAVG(CF_kHz(lmsrInds & hiInds & curSNRinds), corr_snr_2plot(lmsrInds & hiInds & curSNRinds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
     set(lHan_nh_lmsr, 'LineStyle', '-', 'LineWidth', plt.lw2, 'color', 'r');
     
     set(gca, 'XScale', 'log', 'XTick', plt.xtick_vals_cf_kHz, 'YScale', 'log', 'YTick', corrYtick_vals);
@@ -384,11 +391,11 @@ for snrVar= 1:length(snrs2use)
     cfs_in_fric= (CF_kHz>stat_params.fric_range_kHz(1)) & (CF_kHz<stat_params.fric_range_kHz(2));
     cfs_out_fric= ( (CF_kHz>stat_params.cf_min) & (CF_kHz<stat_params.fric_range_kHz(1)) ) |  ( (CF_kHz<stat_params.cf_max) & (CF_kHz>stat_params.fric_range_kHz(2)) );
     
-    [~, stat_params.valid_range_vals(snrVar, 1)]= ttest2(corr_snr_corrected(hsrInds & nhInds & curSNRinds & cfs_in_fric), corr_snr_corrected(hsrInds & hiInds & curSNRinds & cfs_in_fric));
-    [~, stat_params.valid_range_vals(snrVar, 2)]= ttest2(corr_snr_corrected(lmsrInds & nhInds & curSNRinds & cfs_in_fric), corr_snr_corrected(lmsrInds & hiInds & curSNRinds & cfs_in_fric));
+    [~, stat_params.valid_range_vals(snrVar, 1)]= ttest2(corr_snr_2plot(hsrInds & nhInds & curSNRinds & cfs_in_fric), corr_snr_2plot(hsrInds & hiInds & curSNRinds & cfs_in_fric));
+    [~, stat_params.valid_range_vals(snrVar, 2)]= ttest2(corr_snr_2plot(lmsrInds & nhInds & curSNRinds & cfs_in_fric), corr_snr_2plot(lmsrInds & hiInds & curSNRinds & cfs_in_fric));
     
-    [~, stat_params.invalid_range_vals(snrVar, 1)]= ttest2(corr_snr_corrected(hsrInds & nhInds & curSNRinds & cfs_out_fric), corr_snr_corrected(hsrInds & hiInds & curSNRinds & cfs_out_fric));
-    [~, stat_params.invalid_range_vals(snrVar, 2)]= ttest2(corr_snr_corrected(lmsrInds & nhInds & curSNRinds & cfs_out_fric), corr_snr_corrected(lmsrInds & hiInds & curSNRinds & cfs_out_fric));
+    [~, stat_params.invalid_range_vals(snrVar, 1)]= ttest2(corr_snr_2plot(hsrInds & nhInds & curSNRinds & cfs_out_fric), corr_snr_2plot(hsrInds & hiInds & curSNRinds & cfs_out_fric));
+    [~, stat_params.invalid_range_vals(snrVar, 2)]= ttest2(corr_snr_2plot(lmsrInds & nhInds & curSNRinds & cfs_out_fric), corr_snr_2plot(lmsrInds & hiInds & curSNRinds & cfs_out_fric));
     
 end
 
@@ -467,7 +474,11 @@ set(sp_ax(2),'Position', [Xcorner+Xwidth+Xshift Ycorner+2*Ywidth+2*Yshift Xwidth
 drawnow
 
 if saveFig
-    print([dirStruct.png 'Fig8_fric_SpIN'], '-dpng',  '-r600');
+    if use_LinSub1_QuadSub0
+        print([dirStruct.png 'Fig8_fric_SpIN'], '-dpng',  '-r600');
+    else
+        print([dirStruct.png 'Fig8_fric_SpIN_QuadSub'], '-dpng',  '-r600');
+    end
 end
 
 %% Create table
@@ -490,7 +501,7 @@ var_tab_Q10_global= Q10global(valid_fric_inds);
 var_tab_TTR_dB= TTR_dB(valid_fric_inds);
 var_tab_SR= SR(valid_fric_inds);
 var_tab_hearingStatus= nhInds(valid_fric_inds);
-var_tab_resp_corr= corr_snr_corrected(valid_fric_inds);
+var_tab_resp_corr= corr_snr_2plot(valid_fric_inds);
 var_tab_resp_raw= corr_snr_raw(valid_fric_inds);
 var_tab_stim_snr= all_snr(valid_fric_inds);
 

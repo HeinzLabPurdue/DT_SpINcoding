@@ -1,8 +1,8 @@
 clear;
 clc;
 
-saveFig= 0;
-saveStats= 1;
+saveFig= 1;
+saveStats= 0;
 dirStruct.png= [pwd filesep 'final_figs' filesep];
 dirStruct.stats= [pwd filesep 'tables_for_stats' filesep];
 
@@ -38,8 +38,8 @@ anl.LPFpow_cutoff= 3.5e3;
 
 %% Load stim
 [sig, fsSig]= audioread(['mat_data' filesep 'FLN_Stim_S_P.wav']);
-sig= gen_resample(sig, fsSig, fs);
-danish.voiced_boundaries= find_voicing_boundaries(sig, fs, 0, .13);
+sig= helper.gen_resample(sig, fsSig, fs);
+danish.voiced_boundaries= helper.find_voicing_boundaries(sig, fs, 0, .13);
 
 temp_f0= load(['mat_data' filesep 'danish_pitch.mat']);
 temp_f0= temp_f0.pitch_data;
@@ -360,13 +360,13 @@ for snrVar= 1:length(allSNRs)
     
     yyaxis left;
     hold on;
-    plot(all_cf_Hz(nhInds & highSR), F1_strength_rel(nhInds & highSR), plt.markerHSR, 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
-    plot(all_cf_Hz(nhInds & lowSR), F1_strength_rel(nhInds & lowSR), plt.markerLMSR, 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(nhInds & highSR), F1_strength_rel(nhInds & highSR), plt.markerHSR, 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(nhInds & lowSR), F1_strength_rel(nhInds & lowSR), plt.markerLMSR, 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
     [~, ~, lHan] = helper.octAVG(all_cf_Hz(nhInds), F1_strength_rel(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar, [], stat_params.cf_min);
     set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw, 'color', 'b');
     
-    plot(all_cf_Hz(hiInds & highSR), F1_strength_rel(hiInds & highSR), plt.markerHSR, 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
-    plot(all_cf_Hz(hiInds & lowSR), F1_strength_rel(hiInds & lowSR), plt.markerLMSR, 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(hiInds & highSR), F1_strength_rel(hiInds & highSR), plt.markerHSR, 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(hiInds & lowSR), F1_strength_rel(hiInds & lowSR), plt.markerLMSR, 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
     [~, ~, lHan] = helper.octAVG(all_cf_Hz(hiInds), F1_strength_rel(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar, [], stat_params.cf_min);
     set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw, 'color', 'r');
     set(gca, 'YColor', 'k', 'TickLength', plt.tick_len);
@@ -391,13 +391,13 @@ for snrVar= 1:length(allSNRs)
     F2_strength_rel(F2_strength_rel<0)= 0;
     
     yyaxis left;
-    plot(all_cf_Hz(nhInds & highSR), F2_strength_rel(nhInds & highSR), plt.markerHSR, 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
-    plot(all_cf_Hz(nhInds & lowSR), F2_strength_rel(nhInds & lowSR), plt.markerLMSR, 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(nhInds & highSR), F2_strength_rel(nhInds & highSR), plt.markerHSR, 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(nhInds & lowSR), F2_strength_rel(nhInds & lowSR), plt.markerLMSR, 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
     [~, ~, lHan] = helper.octAVG(all_cf_Hz(nhInds), F2_strength_rel(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar, [], stat_params.cf_min);
     set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw, 'color', 'b');
     
-    plot(all_cf_Hz(hiInds & highSR), F2_strength_rel(hiInds & highSR), plt.markerHSR, 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
-    plot(all_cf_Hz(hiInds & lowSR), F2_strength_rel(hiInds & lowSR), plt.markerLMSR, 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(hiInds & highSR), F2_strength_rel(hiInds & highSR), plt.markerHSR, 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(hiInds & lowSR), F2_strength_rel(hiInds & lowSR), plt.markerLMSR, 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
     [~, ~, lHan] = helper.octAVG(all_cf_Hz(hiInds), F2_strength_rel(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar, [], stat_params.cf_min);
     set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw, 'color', 'r');
     set(gca, 'YColor', 'k', 'TickLength', plt.tick_len);
@@ -422,13 +422,13 @@ for snrVar= 1:length(allSNRs)
     F3_strength_rel(F3_strength_rel<0)=0 ;
     
     yyaxis left;
-    plot(all_cf_Hz(nhInds & highSR), F3_strength_rel(nhInds & highSR), plt.markerHSR, 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
-    plot(all_cf_Hz(nhInds & lowSR), F3_strength_rel(nhInds & lowSR), plt.markerLMSR, 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(nhInds & highSR), F3_strength_rel(nhInds & highSR), plt.markerHSR, 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(nhInds & lowSR), F3_strength_rel(nhInds & lowSR), plt.markerLMSR, 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
     [~, ~, lHan] = helper.octAVG(all_cf_Hz(nhInds), F3_strength_rel(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar, [], stat_params.cf_min);
     set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw, 'color', 'b');
     
-    plot(all_cf_Hz(hiInds & highSR), F3_strength_rel(hiInds & highSR), plt.markerHSR, 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
-    plot(all_cf_Hz(hiInds & lowSR), F3_strength_rel(hiInds & lowSR), plt.markerLMSR, 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(hiInds & highSR), F3_strength_rel(hiInds & highSR), plt.markerHSR, 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
+    plot(all_cf_Hz(hiInds & lowSR), F3_strength_rel(hiInds & lowSR), plt.markerLMSR, 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
     [~, ~, lHan] = helper.octAVG(all_cf_Hz(hiInds), F3_strength_rel(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar, [], stat_params.cf_min);
     set(lHan, 'LineStyle', '-', 'LineWidth', plt.lw, 'color', 'r');
     set(gca, 'YColor', 'k', 'TickLength', plt.tick_len);

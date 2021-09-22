@@ -2,7 +2,7 @@ clear;
 clc;
 
 saveFig= 1;
-saveStats= 1;
+saveStats= 0;
 dirStruct.png= [pwd filesep 'final_figs' filesep];
 dirStruct.stats= [pwd filesep 'tables_for_stats' filesep];
 
@@ -37,7 +37,7 @@ anl.CFuplim_kHz= 5.1;
 
 %% Load stim
 [sig, fsSig]= audioread(['mat_data' filesep 'FLN_Stim_S_P.wav']);
-sig= gen_resample(sig, fsSig, fs);
+sig= helper.gen_resample(sig, fsSig, fs);
 danish.voiced_boundaries= helper.find_voicing_boundaries(sig, fs, 0, .13);
 
 temp_f0= load(['mat_data' filesep 'danish_pitch.mat']);
@@ -61,7 +61,7 @@ parfor unitVar= 1:length(all_chinDanishData)
         temp_uRate_diff= (temp_uRate_pos - temp_uRate_neg)/2;
         temp_uRate_diff= temp_uRate_diff .* danish.voiced_inds; %#ok<PFBNS>
         
-        [dT_PSD, freq_PSD]= plot_dpss_psd(temp_uRate_diff, fs, 'nw', anl.nw);
+        [dT_PSD, freq_PSD]= helper.plot_dpss_psd(temp_uRate_diff, fs, 'nw', anl.nw);
         
         VoicedDrivenRate(unitVar)= sum(temp_uRate_sum .* danish.voiced_inds);
         PSD_data_dB_cf(unitVar)= helper.psd_cf_energy(cur_CF_Hz, dT_PSD, freq_PSD, fs);
@@ -104,19 +104,19 @@ clf;
 sp_ax(1)= subplot(4, 1, 1);
 hold on;
 
-plot(all_cf_kHz(nhInds), VoicedDrivenRate(nhInds), 'x', 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(nhInds), VoicedDrivenRate(nhInds), 'x', 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
 [meanRateNH, meanRateFreqNH, lHan] = helper.octAVG(all_cf_kHz(nhInds), VoicedDrivenRate(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'linew', plt.lw2, 'LineStyle', '-', 'Color', 'b');
 
-plot(all_cf_kHz(hiInds), VoicedDrivenRate(hiInds), '+', 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(hiInds), VoicedDrivenRate(hiInds), '+', 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
 [meanRateHI, meanRateFreqHI, lHan]= helper.octAVG( all_cf_kHz(hiInds), VoicedDrivenRate(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'linew', plt.lw2, 'LineStyle', '-', 'Color', 'r');
 
-plot(all_cf_kHz(nhInds), all_sr(nhInds), '.', 'Color', get_color('b'), 'MarkerSize', plt.mrkSize, 'linew', plt.lw0);
+plot(all_cf_kHz(nhInds), all_sr(nhInds), '.', 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize, 'linew', plt.lw0);
 [meanRateNH_SR, meanRateFreqNH_SR, lHan]= helper.octAVG( all_cf_kHz(nhInds), all_sr(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'linew', plt.lw1, 'linestyle', '--', 'Color', 'b');
 
-plot(all_cf_kHz(hiInds), all_sr(hiInds), '.', 'Color', get_color('r'), 'MarkerSize', plt.mrkSize, 'linew', plt.lw0);
+plot(all_cf_kHz(hiInds), all_sr(hiInds), '.', 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize, 'linew', plt.lw0);
 [meanRateHI_SR, meanRateFreqHI_SR, lHan]= helper.octAVG( all_cf_kHz(hiInds), all_sr(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'linew', plt.lw1, 'linestyle', '--', 'Color', 'r');
 
@@ -149,16 +149,16 @@ icons(count).XData= mean(icons(count).XData) + [-.04 +.04]; % count= count+1;
 
 sp_ax(2)= subplot(4, 1, 2);
 hold on;
-plot(all_cf_kHz(nhInds), PSD_data_dB_cf(nhInds), 'x', 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(nhInds), PSD_data_dB_cf(nhInds), 'x', 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan(1)]= helper.octAVG( all_cf_kHz(nhInds), PSD_data_dB_cf(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan(1), 'linew', plt.lw2, 'linestyle', '-', 'Color', 'b');
-plot(all_cf_kHz(hiInds), PSD_data_dB_cf(hiInds), '+', 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(hiInds), PSD_data_dB_cf(hiInds), '+', 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan(2)]= helper.octAVG( all_cf_kHz(hiInds), PSD_data_dB_cf(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan(2), 'linew', plt.lw2, 'linestyle', '-', 'Color', 'r');
 set(gca, 'XScale', 'log', 'XTick', plt.freqTick);
 ylabel('Power_{CF} (dB)');
 ylim([max(ylim)-plt.yLim_DynRange*.67 max(ylim)])
-[legHan, icons]= legend(lHan, 'NH', 'HI', 'Location', 'southwest', 'box', 'off');
+[legHan, icons]= legend(lHan(1:2), 'NH', 'HI', 'Location', 'southwest', 'box', 'off');
 count= 3;
 icons(count).XData= mean(icons(count).XData) + [0.0 +.25]; count= count+2;
 icons(count).XData= mean(icons(count).XData) + [0.0 +.25]; 
@@ -179,10 +179,10 @@ fprintf('Pow_nearCF p=%.4f: %.1f < CF < %.1f kHz\n', pVoicedFrac, cfRange_min_kH
 
 sp_ax(3)= subplot(4, 1, 3);
 hold on;
-plot(all_cf_kHz(nhInds), PSD_data_dB_lf(nhInds), 'x', 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(nhInds), PSD_data_dB_lf(nhInds), 'x', 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan]= helper.octAVG( all_cf_kHz(nhInds), PSD_data_dB_lf(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'linew', plt.lw2, 'linestyle', '-', 'Color', 'b');
-plot(all_cf_kHz(hiInds), PSD_data_dB_lf(hiInds), '+', 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(hiInds), PSD_data_dB_lf(hiInds), '+', 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan]= helper.octAVG( all_cf_kHz(hiInds), PSD_data_dB_lf(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'linew', plt.lw2, 'linestyle', '-', 'Color', 'r');
 set(gca, 'XScale', 'log', 'XTick', plt.freqTick);
@@ -197,10 +197,10 @@ fprintf('PfracLF p=%.4f: %.1f < CF < %.1f kHz\n', pVoicedFrac, cfRange_min_kHz, 
 
 sp_ax(4)= subplot(4, 1, 4);
 hold on;
-plot(all_cf_kHz(nhInds), PSD_data_dB_cf(nhInds) - PSD_data_dB_lf(nhInds), 'x', 'Color', get_color('b'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(nhInds), PSD_data_dB_cf(nhInds) - PSD_data_dB_lf(nhInds), 'x', 'Color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan]= helper.octAVG( all_cf_kHz(nhInds), PSD_data_dB_cf(nhInds) - PSD_data_dB_lf(nhInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'linew', plt.lw2, 'linestyle', '-', 'Color', 'b');
-plot(all_cf_kHz(hiInds), PSD_data_dB_cf(hiInds) - PSD_data_dB_lf(hiInds), '+', 'Color', get_color('r'), 'MarkerSize', plt.mrkSize);
+plot(all_cf_kHz(hiInds), PSD_data_dB_cf(hiInds) - PSD_data_dB_lf(hiInds), '+', 'Color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
 [~, ~, lHan]= helper.octAVG( all_cf_kHz(hiInds), PSD_data_dB_cf(hiInds) - PSD_data_dB_lf(hiInds), plt.MINpts, plt.octRange4Avging, plt.plotVar);
 set(lHan, 'linew', plt.lw2, 'linestyle', '-', 'Color', 'r');
 set(gca, 'XScale', 'log', 'XTick', plt.freqTick);
@@ -211,7 +211,7 @@ xlim(sp_ax(1), [anl.CFlowlim_kHz, anl.CFuplim_kHz]);
 xlabel('Characteristic Frequency (kHz)');
 
 set(findall(gcf,'-property','FontSize'),'FontSize', plt.fSize);
-txtHan= add_subplot_letter(4, 1, plt.ttl_fSize, .02, .95);
+txtHan= helper.add_subplot_letter(4, 1, plt.ttl_fSize, .02, .95);
 
 %
 Xcorner_X= .075;

@@ -1,8 +1,8 @@
 function [VPdistance, nSpikes_avg]= analyze_SpkTrn_precision_VPnorm(curData, anl)
 
 fs= 20e3;
-[stim, fsOrg]=audioread('/media/parida/DATAPART1/Matlab/ExpData/MatData/SP-2017_09_09-Q321_AN_NH/Signals/MH/SNRenv/SNR_0/FLN_Stim_S_N.wav');
-stim= gen_resample(stim, fsOrg, fs);
+[stim, fsOrg]= audioread(fullfile(pwd, 'stimuli', 'SNR_0', 'FLN_Stim_S_P.wav'));
+stim= helper.gen_resample(stim, fsOrg, fs);
 
 durStim=length(stim)/fs;
 

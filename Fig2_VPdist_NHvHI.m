@@ -1,8 +1,8 @@
 clear;
 clc;
 
-saveFig= 1;
-saveStats= 1;
+saveFig= 0;
+saveStats= 0;
 
 dirStruct.png= [pwd filesep 'final_figs' filesep];
 dirStruct.stats= [pwd filesep 'tables_for_stats' filesep];

@@ -2,7 +2,7 @@ clear;
 clc;
 
 saveFig= 1;
-saveStats= 1;
+saveStats= 0;
 
 figSize_cm= [10 5 17 12];
 figure_prop_name = {'PaperPositionMode','units','Position', 'Renderer'};
@@ -108,12 +108,12 @@ plt.MINpts= 7;
 
 sp_ax(1)= subplot(231);
 hold on;
-plot(freqs2use_kHz, abr_thresh_nh, '-o', 'color', get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
+plot(freqs2use_kHz, abr_thresh_nh, '-o', 'color', helper.get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
 
-plot(freqs2use_kHz, abr_thresh_preHI, '-o', 'color', get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
+plot(freqs2use_kHz, abr_thresh_preHI, '-o', 'color', helper.get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
 plot(freqs2use_kHz, nanmean([abr_thresh_nh, abr_thresh_preHI], 2), '-', 'color', 'b', 'markersize', plt.mrkSize, 'linew', plt.lw3);
 
-plot(freqs2use_kHz, abr_thresh_postHI, '-o', 'color', get_color('r'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
+plot(freqs2use_kHz, abr_thresh_postHI, '-o', 'color', helper.get_color('r'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
 plot(freqs2use_kHz, nanmean(abr_thresh_postHI, 2), '-', 'color', 'r', 'markersize', plt.mrkSize, 'linew', plt.lw3);
 
 set(gca, 'xscale', 'log', 'xtick', freqs2use_kHz, 'TickLength', plt.tick_len);
@@ -278,16 +278,16 @@ end
 
 sp_ax(4)= subplot(234);
 hold on;
-plot(freq27/1e3, dp_data_nh, '-o', 'color', get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
+plot(freq27/1e3, dp_data_nh, '-o', 'color', helper.get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
 
-plot(freq27/1e3, dp_data_preHI, '-o', 'color', get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
+plot(freq27/1e3, dp_data_preHI, '-o', 'color', helper.get_color('b'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
 % plot(freq27/1e3, nanmean(dp_data_nh, 2), '-', 'color', 'b', 'markersize', plt.mrkSize, 'linew', plt.lw3);
 [~,~, lHan] = helper.octAVG_upd(repmat(freq27(:)/1e3, size(dp_data_nh, 2)+size(dp_data_preHI, 2), 1), [dp_data_nh(:); dp_data_preHI(:)], ...
     1, plt.step4Avging, plt.plotVar, plt.window4Avging);
 set(lHan, 'linestyle', '-', 'color', 'b', 'markersize', plt.mrkSize, 'linew', plt.lw3);
 
 
-plot(freq27/1e3, dp_data_postHI, '-o', 'color', get_color('r'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
+plot(freq27/1e3, dp_data_postHI, '-o', 'color', helper.get_color('r'), 'markersize', plt.mrkSize, 'linew', plt.lw1);
 % plot(freq27/1e3, nanmean(dp_data_postHI, 2), '-', 'color', 'r', 'markersize', plt.mrkSize, 'linew', plt.lw3);
 [~,~, lHan] = helper.octAVG_upd(repmat(freq27(:)/1e3, size(dp_data_postHI, 2), 1), dp_data_postHI(:), 1, plt.step4Avging, plt.plotVar, plt.window4Avging);
 set(lHan, 'linestyle', '-', 'color', 'r', 'markersize', plt.mrkSize, 'linew', plt.lw3);
@@ -345,7 +345,7 @@ Q10_vals(Q10_vals<minQ10)= minQ10;
 sp_ax(2)= subplot(232);
 hold on;
 
-plot(cf_kHz(nhInds), thresh_dBSPL(nhInds), 'x', 'color', get_color('b'), 'MarkerSize', plt.mrkSize);
+plot(cf_kHz(nhInds), thresh_dBSPL(nhInds), 'x', 'color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
 % [meanThreshNH,meanThFreqNH, lHan]= bf_trifilt(cf_kHz(nhInds), thresh_dBSPL(nhInds), plt.plotVar, 'b', plt.step4Avging, plt.avgType);
 [meanThreshNH,meanThFreqNH, lHan] = helper.octAVG_upd(cf_kHz(nhInds), thresh_dBSPL(nhInds), plt.MINpts, plt.step4Avging, plt.plotVar, plt.window4Avging, plt.avgType);
 set(lHan, 'linew', plt.lw3, 'LineStyle', '-', 'Color', 'b');
@@ -353,14 +353,14 @@ set(lHan, 'linew', plt.lw3, 'LineStyle', '-', 'Color', 'b');
 set(lHan, 'linew', plt.lw2, 'LineStyle', '--', 'Color', 'b');
 
 
-plot(cf_kHz(hiInds), thresh_dBSPL(hiInds), '+', 'color', get_color('r'), 'MarkerSize', plt.mrkSize);
+plot(cf_kHz(hiInds), thresh_dBSPL(hiInds), '+', 'color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
 % [meanThreshHI,meanThFreqHI, lHan]= bf_trifilt(cf_kHz(hiInds), thresh_dBSPL(hiInds), plt.plotVar, 'r', plt.step4Avging, plt.avgType);
 [meanThreshHI,meanThFreqHI, lHan] = helper.octAVG_upd(cf_kHz(hiInds), thresh_dBSPL(hiInds), plt.MINpts, plt.step4Avging, plt.plotVar, plt.window4Avging, plt.avgType);
 set(lHan, 'linew', plt.lw3, 'LineStyle', '-', 'Color', 'r');
 [~,~, lHan] = helper.octAVG_upd(cf_kHz(hiInds), thresh_dBSPL(hiInds), plt.MINpts, plt.step4Avging, plt.plotVar, plt.window4Avging, 10);
 set(lHan, 'linew', plt.lw2, 'LineStyle', '--', 'Color', 'r');
 
-% plot(cf_kHz(outlier_inds), thresh_dBSPL(outlier_inds), '+', 'color', get_color('g'), 'MarkerSize', plt.mrkSize);
+% plot(cf_kHz(outlier_inds), thresh_dBSPL(outlier_inds), '+', 'color', helper.get_color('g'), 'MarkerSize', plt.mrkSize);
 set(gca, 'xscale', 'log', 'xtick', freqs2use_kHz, 'TickLength', plt.tick_len);
 xlim([.35 10]);
 ylim([-19 90]);
@@ -376,11 +376,11 @@ legHan.Position(1:2)= [0.38, 0.58];
 
 sp_ax(5)= subplot(235);
 hold on;
-plot(cf_kHz(nhInds), Q10_vals(nhInds), 'x', 'color', get_color('b'), 'MarkerSize', plt.mrkSize);
+plot(cf_kHz(nhInds), Q10_vals(nhInds), 'x', 'color', helper.get_color('b'), 'MarkerSize', plt.mrkSize);
 [meanQ10NH,meanQ10FreqNH, lHan] = helper.octAVG_upd(cf_kHz(nhInds), Q10_vals(nhInds), plt.MINpts, plt.step4Avging, plt.plotVar, plt.window4Avging, plt.avgType);
 set(lHan, 'linew', plt.lw3, 'LineStyle', '-', 'Color', 'b');
 
-plot(cf_kHz(hiInds), Q10_vals(hiInds), '+', 'color', get_color('r'), 'MarkerSize', plt.mrkSize);
+plot(cf_kHz(hiInds), Q10_vals(hiInds), '+', 'color', helper.get_color('r'), 'MarkerSize', plt.mrkSize);
 [meanQ10HI,meanQ10FreqHI, lHan] = helper.octAVG_upd(cf_kHz(hiInds), Q10_vals(hiInds), plt.MINpts, plt.step4Avging, plt.plotVar, plt.window4Avging, plt.avgType);
 set(lHan, 'linew', plt.lw3, 'LineStyle', '-', 'Color', 'r');
 
@@ -490,9 +490,9 @@ fiftyPtile_Shift_chin= prcTileData_Imild_chin(:, prctPoint==50) - prcTileData_NH
 
 sp_ax(3)= subplot(233);
 hold on;
-plot(CFcenters, fiftyPtile_Shift_chin, plt.fifty_pTileMRK, 'color', get_color('k'), 'MarkerSize', plt.mrkSize2);
-plot(CFcenters, tenPtile_Shift_chin, plt.ten_pTileMRK, 'color', get_color('k'), 'MarkerSize', plt.mrkSize2);
-plot(freqs2use_kHz, abr_thresh_shift, '+', 'color', get_color('k'), 'MarkerSize', plt.mrkSize2);
+plot(CFcenters, fiftyPtile_Shift_chin, plt.fifty_pTileMRK, 'color', helper.get_color('k'), 'MarkerSize', plt.mrkSize2);
+plot(CFcenters, tenPtile_Shift_chin, plt.ten_pTileMRK, 'color', helper.get_color('k'), 'MarkerSize', plt.mrkSize2);
+plot(freqs2use_kHz, abr_thresh_shift, '+', 'color', helper.get_color('k'), 'MarkerSize', plt.mrkSize2);
 set(gca, 'xscale', 'log', 'xtick', CFcenters, 'TickLength', plt.tick_len);
 
 [leg3_han, icons3]= legend('50%', '10%', 'ABR', 'box', 'on');
@@ -509,10 +509,10 @@ ttleHan(1).Position(2)= .925;
 
 sp_ax(6)= subplot(236);
 hold on;
-% lHan(1)= plot(CFcenters, fiftyPtile_Shift_Isev_cat, plt.fifty_pTileMRK, 'color', get_color('m'), 'MarkerSize', plt.mrkSize2);
-% lHan(2)= plot(CFcenters, tenPtile_Shift_Isev_cat, plt.ten_pTileMRK, 'color', get_color('m'), 'MarkerSize', plt.mrkSize2);
-lHan(3)= plot(CFcenters, fiftyPtile_Shift_HI_cat, plt.fifty_pTileMRK, 'color', get_color('k'), 'MarkerSize', plt.mrkSize2);
-lHan(4)= plot(CFcenters, tenPtile_Shift_HI_cat, plt.ten_pTileMRK, 'color', get_color('k'), 'MarkerSize', plt.mrkSize2);
+% lHan(1)= plot(CFcenters, fiftyPtile_Shift_Isev_cat, plt.fifty_pTileMRK, 'color', helper.get_color('m'), 'MarkerSize', plt.mrkSize2);
+% lHan(2)= plot(CFcenters, tenPtile_Shift_Isev_cat, plt.ten_pTileMRK, 'color', helper.get_color('m'), 'MarkerSize', plt.mrkSize2);
+lHan(3)= plot(CFcenters, fiftyPtile_Shift_HI_cat, plt.fifty_pTileMRK, 'color', helper.get_color('k'), 'MarkerSize', plt.mrkSize2);
+lHan(4)= plot(CFcenters, tenPtile_Shift_HI_cat, plt.ten_pTileMRK, 'color', helper.get_color('k'), 'MarkerSize', plt.mrkSize2);
 set(gca, 'xscale', 'log', 'xtick', CFcenters, 'TickLength', plt.tick_len);
 xlab_han(3)= xlabel('Band Center Frequency (kHz)', 'Units', 'normalized');
 ylabHan_cat_chin= ylabel('Shift in impaired re. normal (dB)', 'Units', 'normalized');
@@ -528,7 +528,7 @@ ylim(sp_ax(3), [0 53]);
 
 set(findall(gcf,'-property','FontSize'),'FontSize', plt.fontSize);
 set(ttleHan,'FontSize', plt.ttlFontSize);
-add_subplot_letter_txp(2, 3, 11, .05, .95);
+helper.add_subplot_letter_txp(2, 3, 11, .05, .95);
 
 %% define new axes for AB
 Xcorner_AB= .057;
